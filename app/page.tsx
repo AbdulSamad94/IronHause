@@ -93,7 +93,7 @@ export default function Home() {
       </nav>
 
       {/* HERO */}
-      <section className="min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 pt-20">
+      <section className="min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 pt-32">
         <div className="max-w-5xl w-full text-center">
           <h1 className="font-bebas text-6xl sm:text-8xl leading-none mb-2">
             BUILT TO
