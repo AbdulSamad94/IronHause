@@ -1,16 +1,16 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono, Bebas_Neue, DM_Sans } from 'next/font/google'
+import { Geist, Geist_Mono, Anton, JetBrains_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
-const _bebasNeue = Bebas_Neue({ weight: ['400'], subsets: ["latin"], variable: '--font-bebas' });
-const _dmSans = DM_Sans({ subsets: ["latin"], variable: '--font-dm' });
+const _anton = Anton({ weight: ['400'], subsets: ["latin"], variable: '--font-anton' });
+const _jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: '--font-jetbrains' });
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'IRONHAUS - Built to Destroy Limits',
+  description: 'Elite training. Zero excuses. Real results.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -37,8 +37,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${_bebasNeue.variable} ${_dmSans.variable}`}>
-      <body className="font-dm antialiased">
+    <html lang="en" className={`${_anton.variable} ${_jetbrainsMono.variable} dark`}>
+      <body className="font-jetbrains antialiased bg-black text-white selection:bg-iron-neon selection:text-black">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
