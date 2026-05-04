@@ -82,6 +82,7 @@ export function AIAgentChat() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="ENTER COMMAND..."
+              aria-label="Chat message input"
               className="flex-1 bg-white/5 rounded-full border border-white/10 text-white font-jetbrains text-sm px-4 py-2 focus:outline-none focus:border-iron-neon placeholder:text-gray-500 uppercase"
             />
             <button 
@@ -97,6 +98,7 @@ export function AIAgentChat() {
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={isOpen ? "Close AI Chat" : "Open AI Chat"}
         className="bg-iron-neon text-black w-16 h-16 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(200,244,0,0.3)] hover:shadow-[0_0_50px_rgba(200,244,0,0.6)] hover:scale-105 transition-all relative group"
       >
         <span className="absolute -top-2 -right-2 bg-iron-purple text-white text-[10px] font-jetbrains font-bold px-2 py-1 rounded-full rotate-12 shadow-lg">

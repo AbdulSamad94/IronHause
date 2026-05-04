@@ -161,6 +161,11 @@
 }
 
 /* Custom Brutal Scrollbar */
+.brutal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 244, 0, 0.3) transparent;
+}
+
 .brutal-scrollbar::-webkit-scrollbar {
   width: 8px;
   background: transparent;
