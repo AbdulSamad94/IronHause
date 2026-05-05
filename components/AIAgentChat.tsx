@@ -2,15 +2,30 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { sendChatMessage } from '@/lib/api-client'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 export function AIAgentChat() {
   const [isOpen, setIsOpen] = useState(false)
+  const [sessionId, setSessionId] = useState<string>('')
   const [messages, setMessages] = useState<{ role: 'agent' | 'user'; text: string }[]>([
     { role: 'agent', text: 'Hi there! I am the IronHause AI assistant. I can help answer questions about our pricing, class schedules, or book you an intro session. How can I help?' }
   ])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Initialize or retrieve session ID
+  useEffect(() => {
+    const storedSessionId = localStorage.getItem('ironhaus_session_id')
+    if (storedSessionId) {
+      setSessionId(storedSessionId)
+    } else {
+      const newSessionId = crypto.randomUUID()
+      localStorage.setItem('ironhaus_session_id', newSessionId)
+      setSessionId(newSessionId)
+    }
+  }, [])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -30,13 +45,14 @@ export function AIAgentChat() {
     setIsTyping(true)
 
     try {
-      const data = await sendChatMessage(userMsg);
+      const data = await sendChatMessage(userMsg, sessionId);
       if (data.response) {
         setMessages(prev => [...prev, { role: 'agent', text: data.response! }])
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat error:", error)
-      setMessages(prev => [...prev, { role: 'agent', text: 'Sorry, I am having trouble connecting to my servers right now.' }])
+      const errorMsg = error instanceof Error ? error.message : 'Sorry, I am having trouble connecting to my servers right now.';
+      setMessages(prev => [...prev, { role: 'agent', text: errorMsg }])
     } finally {
       setIsTyping(false)
     }
@@ -86,17 +102,33 @@ export function AIAgentChat() {
                       : 'bg-white/5 text-white/90 border border-white/5 rounded-2xl rounded-tl-sm'
                   }`}
                 >
-                  {msg.text}
+                  {msg.role === 'agent' ? (
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                        ul: ({...props}) => <ul className="list-disc pl-4 mb-2 space-y-1" {...props} />,
+                        ol: ({...props}) => <ol className="list-decimal pl-4 mb-2 space-y-1" {...props} />,
+                        li: ({...props}) => <li className="marker:text-cyan-400" {...props} />,
+                        strong: ({...props}) => <strong className="font-semibold text-cyan-400" {...props} />,
+                        a: ({...props}) => <a className="text-cyan-400 hover:underline underline-offset-4" target="_blank" rel="noopener noreferrer" {...props} />,
+                      }}
+                    >
+                      {msg.text}
+                    </ReactMarkdown>
+                  ) : (
+                    msg.text
+                  )}
                 </div>
               </div>
             ))}
             
             {isTyping && (
               <div className="flex flex-col items-start">
-                <div className="bg-white/5 border border-white/5 rounded-2xl rounded-tl-sm px-5 py-4 flex gap-1.5">
-                  <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce"></div>
-                  <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <div className="bg-white/5 border border-white/5 rounded-2xl rounded-tl-sm px-5 py-4 w-48 space-y-2.5">
+                  <div className="h-2 bg-white/10 rounded-full w-3/4 animate-pulse" />
+                  <div className="h-2 bg-white/10 rounded-full w-full animate-pulse [animation-delay:150ms]" />
+                  <div className="h-2 bg-white/10 rounded-full w-1/2 animate-pulse [animation-delay:300ms]" />
                 </div>
               </div>
             )}

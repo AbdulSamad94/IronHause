@@ -1,34 +1,35 @@
 import { NextResponse } from 'next/server';
+import { ZodError } from 'zod';
 import { checkRateLimit } from '@/lib/ratelimit';
 import { forwardToBackend } from '@/lib/fastapi';
-
-interface ChatRequest {
-  message: string;
-}
+import { ChatRequestSchema } from '@/lib/schemas';
 
 export async function POST(request: Request) {
-  try {
-    // 1. Check Rate Limits
-    const rateLimitResponse = await checkRateLimit(request);
-    if (rateLimitResponse) return rateLimitResponse;
+  // 1. Rate limit check
+  const rateLimitResponse = await checkRateLimit(request);
+  if (rateLimitResponse) return rateLimitResponse;
 
-    // 2. Parse & Validate Input
-    const body: Partial<ChatRequest> = await request.json();
-    if (!body?.message) {
+  try {
+    const body = await request.json();
+
+    // 2. Schema validation — returns 400 with readable errors on failure
+    const { message, sessionId } = ChatRequestSchema.parse(body);
+
+    // 3. Forward to FastAPI backend
+    return await forwardToBackend(message, sessionId);
+
+  } catch (error) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Message is required' }, 
-        { status: 400 }
+        { error: error.errors[0]?.message ?? 'Invalid request.' },
+        { status: 400 },
       );
     }
 
-    // 3. Process Request
-    return await forwardToBackend(body.message);
-
-  } catch (error: any) {
-    console.error('API Route Error:', error);
+    console.error('Unhandled error in /api/chat:', error);
     return NextResponse.json(
-      { error: 'Failed to communicate with backend service' },
-      { status: 500 }
+      { error: 'Failed to communicate with the backend service.' },
+      { status: 500 },
     );
   }
 }
