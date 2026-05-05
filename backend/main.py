@@ -1,15 +1,20 @@
+import logging
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from core.config import settings
 from routers.agent import agent_router
 import uvicorn
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager"""
-    print(f"Starting {settings.APP_NAME}...")
+    logger.info(f"Starting {settings.APP_NAME}...")
     yield
-    print(f"Shutting down {settings.APP_NAME}...")
+    logger.info(f"Shutting down {settings.APP_NAME}...")
 
 app = FastAPI(
     title=settings.APP_NAME,

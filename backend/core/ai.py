@@ -2,8 +2,7 @@ from openai import AsyncOpenAI
 from agents import OpenAIResponsesModel, RunConfig
 from core.config import settings
 
-if not settings.OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY is not set in environment variables.")
+# Validation is now handled by Pydantic during settings initialization
 
 client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 model = OpenAIResponsesModel(openai_client=client, model="gpt-4o-mini")

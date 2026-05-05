@@ -18,10 +18,9 @@ export async function forwardToBackend(message: string): Promise<NextResponse> {
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`FastAPI Error (${response.status}):`, errorText);
+    console.error(`FastAPI Error: Backend returned status ${response.status}`);
     return NextResponse.json(
-      { error: `Backend API error: ${response.statusText}` },
+      { error: 'The backend service encountered an error.' },
       { status: response.status }
     );
   }
