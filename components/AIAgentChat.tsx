@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { sendChatMessage } from '@/lib/api-client'
 
 export function AIAgentChat() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<{ role: 'agent' | 'user'; text: string }[]>([
-    { role: 'agent', text: 'SYSTEM ONLINE. I am the IronHaus AI protocol. I can handle bookings, membership inquiries, and automate facility operations. How can I assist you?' }
+    { role: 'agent', text: 'Hi there! I am the IronHause AI assistant. I can help answer questions about our pricing, class schedules, or book you an intro session. How can I help?' }
   ])
   const [input, setInput] = useState('')
+  const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -16,82 +18,114 @@ export function AIAgentChat() {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [messages, isTyping])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim()) return
 
-    setMessages(prev => [...prev, { role: 'user', text: input }])
+    const userMsg = input;
+    setMessages(prev => [...prev, { role: 'user', text: userMsg }])
     setInput('')
+    setIsTyping(true)
 
-    // Simulate AI response
-    setTimeout(() => {
-      setMessages(prev => [
-        ...prev,
-        { role: 'agent', text: 'Processing request... I have logged your input into the facility management system. As an AI agent, I automate these interactions 24/7 for gym owners.' }
-      ])
-    }, 1000)
+    try {
+      const data = await sendChatMessage(userMsg);
+      if (data.response) {
+        setMessages(prev => [...prev, { role: 'agent', text: data.response! }])
+      }
+    } catch (error) {
+      console.error("Chat error:", error)
+      setMessages(prev => [...prev, { role: 'agent', text: 'Sorry, I am having trouble connecting to my servers right now.' }])
+    } finally {
+      setIsTyping(false)
+    }
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end font-sans">
       {isOpen && (
-        <div className="bg-black/95 w-80 sm:w-96 h-[500px] mb-4 brutal-border flex flex-col relative overflow-hidden animate-in slide-in-from-bottom-5">
-          <div className="noise-overlay opacity-30"></div>
+        <div className="w-[calc(100vw-3rem)] sm:w-[400px] h-[600px] max-h-[calc(100vh-8rem)] mb-6 bg-aura-bg/60 backdrop-blur-3xl border border-white/10 rounded-4xl flex flex-col relative shadow-2xl shadow-cyan-900/20 animate-in slide-in-from-bottom-8 duration-300 ease-out overflow-hidden">
           
           {/* Header */}
-          <div className="bg-iron-neon/90 backdrop-blur-md text-black p-4 flex justify-between items-center relative z-10 border-b border-black/20">
-            <div>
-              <h3 className="font-anton uppercase tracking-widest text-xl m-0 leading-none">AUTO_AGENT</h3>
-              <p className="font-jetbrains text-[10px] uppercase font-bold">Status: Active // 24/7</p>
+          <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center bg-linear-to-b from-white/4 to-transparent">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full bg-linear-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                  <div className="w-4 h-4 bg-white rounded-full"></div>
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-aura-bg"></div>
+              </div>
+              <div>
+                <h3 className="font-medium text-white text-base tracking-tight">IronHause Agent</h3>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>
+                  <p className="text-[11px] text-white/50 uppercase tracking-widest font-medium">Online</p>
+                </div>
+              </div>
             </div>
-            <button 
-              onClick={() => setIsOpen(false)}
-              className="text-black hover:text-white transition-colors font-jetbrains font-bold"
-            >
-              [X]
+            <button onClick={() => setIsOpen(false)} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
 
-          {/* Chat Body */}
-          <div className="flex-1 p-4 overflow-y-auto brutal-scrollbar flex flex-col gap-4 relative z-10 font-jetbrains text-sm">
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
             {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} group`}>
+                <div className={`text-[10px] text-white/30 mb-1.5 px-2 uppercase tracking-wider font-medium opacity-0 group-hover:opacity-100 transition-opacity`}>
+                  {msg.role === 'agent' ? 'IronHause Agent' : 'You'}
+                </div>
                 <div 
-                  className={`max-w-[85%] p-3 rounded-2xl ${
+                  className={`max-w-[85%] px-5 py-3.5 text-sm font-light leading-relaxed ${
                     msg.role === 'user' 
-                      ? 'bg-iron-purple/80 text-white rounded-br-sm backdrop-blur-sm' 
-                      : 'bg-white/5 border border-white/10 text-white rounded-bl-sm backdrop-blur-sm'
+                      ? 'bg-linear-to-tr from-cyan-600 to-blue-600 text-white rounded-2xl rounded-tr-sm shadow-lg shadow-cyan-900/20' 
+                      : 'bg-white/5 text-white/90 border border-white/5 rounded-2xl rounded-tl-sm'
                   }`}
                 >
-                  <div className="text-[10px] opacity-70 mb-1 uppercase tracking-widest">
-                    {msg.role === 'user' ? 'USER_INPUT' : 'SYS_RESPONSE'}
-                  </div>
                   {msg.text}
                 </div>
               </div>
             ))}
+            
+            {isTyping && (
+              <div className="flex flex-col items-start">
+                <div className="bg-white/5 border border-white/5 rounded-2xl rounded-tl-sm px-5 py-4 flex gap-1.5">
+                  <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce"></div>
+                  <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Input Area */}
-          <form onSubmit={handleSubmit} className="p-3 border-t border-white/10 bg-black/50 backdrop-blur-md relative z-10 flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="ENTER COMMAND..."
-              aria-label="Chat message input"
-              className="flex-1 bg-white/5 rounded-full border border-white/10 text-white font-jetbrains text-sm px-4 py-2 focus:outline-none focus:border-iron-neon placeholder:text-gray-500 uppercase"
-            />
-            <button 
-              type="submit"
-              className="bg-iron-neon text-black px-4 py-2 rounded-full font-jetbrains font-bold uppercase text-xs hover:bg-white transition-colors"
-            >
-              SEND
-            </button>
-          </form>
+          <div className="p-4 bg-linear-to-t from-aura-bg to-transparent pt-8">
+            <form onSubmit={handleSubmit} className="relative flex items-center">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Message Agent..."
+                aria-label="Chat message input"
+                className="w-full bg-white/5 border border-white/10 rounded-full text-white text-sm pl-5 pr-14 py-4 focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 transition-all placeholder:text-white/30 font-light shadow-inner"
+              />
+              <button 
+                type="submit"
+                disabled={!input.trim()}
+                className="absolute right-2 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:hover:scale-100"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+              </button>
+            </form>
+            <div className="text-center mt-3 text-[10px] text-white/30 uppercase tracking-widest">
+              Powered by IronHause AI
+            </div>
+          </div>
         </div>
       )}
 
@@ -99,14 +133,19 @@ export function AIAgentChat() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         aria-label={isOpen ? "Close AI Chat" : "Open AI Chat"}
-        className="bg-iron-neon text-black w-16 h-16 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(200,244,0,0.3)] hover:shadow-[0_0_50px_rgba(200,244,0,0.6)] hover:scale-105 transition-all relative group"
+        className={`relative group flex items-center justify-center transition-all duration-300 ${isOpen ? 'w-12 h-12 rounded-full bg-white/10 border border-white/20 hover:bg-white/20' : 'w-16 h-16 rounded-full btn-glow'}`}
       >
-        <span className="absolute -top-2 -right-2 bg-iron-purple text-white text-[10px] font-jetbrains font-bold px-2 py-1 rounded-full rotate-12 shadow-lg">
-          AI
-        </span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
+        {!isOpen && (
+          <div className="absolute inset-0 rounded-full bg-cyan-400/20 animate-ping" style={{ animationDuration: '3s' }}></div>
+        )}
+        
+        <div className={`relative z-10 flex items-center justify-center transition-transform duration-300 ${isOpen ? 'rotate-90' : 'rotate-0'}`}>
+          {isOpen ? (
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          ) : (
+             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-black"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          )}
+        </div>
       </button>
     </div>
   )

@@ -7,9 +7,16 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        'iron-neon': '#C8F400',
+        'iron-purple': '#B200FF',
+        'iron-dark': '#0A0A0A',
+      },
       fontFamily: {
         bebas: ['var(--font-bebas)'],
         dm: ['var(--font-dm)'],
+        anton: ['var(--font-anton)'],
+        jetbrains: ['var(--font-jetbrains)'],
       },
       keyframes: {
         marquee: {
@@ -22,6 +29,5 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
 }
 export default config

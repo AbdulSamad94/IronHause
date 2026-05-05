@@ -14,3 +14,25 @@ next.user-config.*
 node_modules
 .next/
 .DS_Store
+
+# Python / Backend
+__pycache__/
+*.py[cod]
+*$py.class
+backend/venv/
+backend/.venv/
+.env
+.env.local
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.db
+*.sqlite3
+backend/dist/
+backend/build/
+*.egg-info/
+
+.fastapicloud
+
+# uv
+.uv/
