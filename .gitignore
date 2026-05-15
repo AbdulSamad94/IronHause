@@ -33,6 +33,7 @@ backend/build/
 *.egg-info/
 
 .fastapicloud
+.claude/projects
 
 # uv
 .uv/
