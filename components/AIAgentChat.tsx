@@ -106,12 +106,12 @@ export function AIAgentChat() {
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
-                        p: ({...props}) => <p className="mb-2 last:mb-0" {...props} />,
-                        ul: ({...props}) => <ul className="list-disc pl-4 mb-2 space-y-1" {...props} />,
-                        ol: ({...props}) => <ol className="list-decimal pl-4 mb-2 space-y-1" {...props} />,
-                        li: ({...props}) => <li className="marker:text-cyan-400" {...props} />,
-                        strong: ({...props}) => <strong className="font-semibold text-cyan-400" {...props} />,
-                        a: ({...props}) => <a className="text-cyan-400 hover:underline underline-offset-4" target="_blank" rel="noopener noreferrer" {...props} />,
+                        p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                        ul: ({node, ...props}) => <ul className="list-disc pl-4 mb-2 space-y-1" {...props} />,
+                        ol: ({node, ...props}) => <ol className="list-decimal pl-4 mb-2 space-y-1" {...props} />,
+                        li: ({node, ...props}) => <li className="marker:text-cyan-400" {...props} />,
+                        strong: ({node, ...props}) => <strong className="font-semibold text-cyan-400" {...props} />,
+                        a: ({node, ...props}) => <a className="text-cyan-400 hover:underline underline-offset-4" target="_blank" rel="noopener noreferrer" {...props} />,
                       }}
                     >
                       {msg.text}

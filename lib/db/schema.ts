@@ -1,4 +1,4 @@
-import { pgTable, serial, text, varchar, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, text, varchar, timestamp } from 'drizzle-orm/pg-core';
 
 /**
  * Stores gym owners / prospects who interact with the IronHause AI agent.
@@ -17,7 +17,7 @@ export const leads = pgTable('leads', {
  */
 export const bookings = pgTable('bookings', {
   id: serial('id').primaryKey(),
-  leadId: serial('lead_id').references(() => leads.id),
+  leadId: integer('lead_id').references(() => leads.id),
   preferredDate: varchar('preferred_date', { length: 100 }),
   notes: text('notes'),
   status: varchar('status', { length: 50 }).default('pending'),
