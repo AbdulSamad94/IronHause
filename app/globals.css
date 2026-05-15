@@ -44,7 +44,7 @@
 
   body {
     @apply bg-aura-bg text-white antialiased selection:bg-cyan-500/30;
-    user-select: none;
+    /* user-select: none; */
   }
 
   button {

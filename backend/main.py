@@ -1,5 +1,11 @@
 import logging
-from fastapi import FastAPI
+from dotenv import load_dotenv
+
+# Must run before any module imports settings
+load_dotenv()
+
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from core.config import settings
 from routers.agent import agent_router
@@ -22,6 +28,16 @@ app = FastAPI(
     version="0.0.1",
     lifespan=lifespan,
 )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Catch-all handler so the API always returns clean JSON on unexpected errors."""
+    logger.exception("Unhandled exception on %s %s", request.method, request.url)
+    return JSONResponse(
+        status_code=500,
+        content={"error": "An unexpected error occurred. Please try again later."},
+    )
 
 @app.get("/health")
 async def health_check():
