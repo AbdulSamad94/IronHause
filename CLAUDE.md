@@ -2,6 +2,8 @@
 
 AI-powered gym automation platform. Full-stack: Next.js 16 frontend + FastAPI backend + OpenAI Agents SDK. Serves as both a sales demo and a reusable template for AI Automation Agencies.
 
+**Production URL**: https://ironhause.vercel.app
+
 ---
 
 ## Project Structure
@@ -185,6 +187,23 @@ Never break these:
 - Gradient text: use `.text-gradient` or `.text-gradient-cyan`
 - CTA buttons: use `.btn-glow`
 - Custom CSS variables defined in `app/globals.css`
+
+---
+
+## Email Notifications
+
+`backend/services/email_service.py` — Resend-based notifications. Fires automatically after `capture_lead()` and `book_intro_session()` succeed.
+
+- `notify_new_lead(name, email, message, lead_id)` — called from `lead_tools.py`
+- `notify_new_booking(booking_id, preferred_date, notes)` — called from `booking_tools.py`
+- Silently skipped if `RESEND_API_KEY` or `NOTIFICATION_EMAIL` are not set (optional feature)
+- Errors are logged but never bubble up to the agent (never breaks the chat flow)
+
+Required env vars in `backend/.env`:
+```env
+RESEND_API_KEY=re_...        # Get at resend.com/api-keys
+NOTIFICATION_EMAIL=you@email.com
+```
 
 ---
 
