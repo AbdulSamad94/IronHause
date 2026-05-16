@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Skill(nextjs-performance)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(Get-ChildItem -Recurse -Force)",
+      "Bash(Select-Object FullName)"
     ]
   }
 }
