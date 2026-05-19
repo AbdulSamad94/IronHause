@@ -27,6 +27,8 @@ backend/.venv/
 .mypy_cache/
 .ruff_cache/
 *.db
+*.db-shm
+*.db-wal
 *.sqlite3
 backend/dist/
 backend/build/
@@ -34,6 +36,7 @@ backend/build/
 
 .fastapicloud
 .claude/projects
+.claude/settings.local.json
 
 # uv
 .uv/

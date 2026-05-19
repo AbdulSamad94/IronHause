@@ -1,84 +1,163 @@
-export function Hero() {
-  return (
-    <section className="min-h-screen flex flex-col justify-center px-4 sm:px-6 lg:px-8 pt-32 relative z-10 text-center">
-      <div className="max-w-4xl mx-auto flex flex-col items-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-surface mb-8">
-          <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
-          <span className="text-xs font-medium tracking-wide text-white/80">IronHause v2.0 is now live</span>
-        </div>
-        
-        <h1 className="text-6xl sm:text-8xl font-bold tracking-tighter mb-6 leading-[1.1]">
-          <span className="text-linear">Automate your</span><br />
-          <span className="text-linear-cyan">Fitness Facility.</span>
-        </h1>
-        
-        <p className="text-lg sm:text-xl text-white/60 max-w-2xl mb-12 font-light leading-relaxed">
-          Deploy intelligent AI agents to handle lead capture, session booking, and member support. Reclaim your time and scale your gym effortlessly.
-        </p>
-        
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          <button className="btn-glow">
-            Start Free Trial
-          </button>
-          <button className="px-8 py-3 rounded-full glass-surface text-white hover:bg-white/10 transition-colors flex items-center justify-center gap-2">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            Watch Demo
-          </button>
-        </div>
-      </div>
+'use client'
 
-      {/* Dashboard Preview Image/Mock */}
-      <div className="mt-24 max-w-5xl mx-auto w-full glass-surface p-4 aspect-video flex items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-t from-aura-bg to-transparent z-10"></div>
-        <div className="w-full h-full border border-white/5 rounded-xl bg-[#0B101A] p-6 relative">
-           <div className="flex justify-between items-center border-b border-white/5 pb-4 mb-4">
-             <div className="flex gap-2">
-               <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
-               <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
-               <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
-             </div>
-             <div className="text-xs text-white/40 font-mono">Agent Performance Dashboard</div>
-           </div>
-           <div className="grid grid-cols-3 gap-6">
-              <div className="col-span-2 space-y-4">
-                 <div className="h-32 rounded-lg bg-linear-to-r from-cyan-500/10 to-blue-500/5 border border-white/5 flex items-end p-4">
-                    <div className="w-full flex items-end justify-between gap-2 h-full opacity-50">
-                      {[40, 60, 45, 80, 55, 90, 75, 100].map((h, i) => (
-                        <div key={i} className="w-full bg-cyan-400/20 rounded-t-sm" style={{ height: `${h}%` }}></div>
-                      ))}
-                    </div>
-                 </div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="h-24 rounded-lg bg-white/5 border border-white/5 p-4 flex flex-col justify-center">
-                      <div className="text-sm text-white/40 mb-1">Leads Captured</div>
-                      <div className="text-3xl font-light text-white">1,204 <span className="text-sm text-cyan-400 ml-2">+12%</span></div>
-                    </div>
-                    <div className="h-24 rounded-lg bg-white/5 border border-white/5 p-4 flex flex-col justify-center">
-                      <div className="text-sm text-white/40 mb-1">Sessions Booked</div>
-                      <div className="text-3xl font-light text-white">482 <span className="text-sm text-cyan-400 ml-2">+8%</span></div>
-                    </div>
-                 </div>
+export function Hero() {
+  const stats = [
+    { value: '40 hrs', label: 'saved / month' },
+    { value: '40%',    label: 'more bookings' },
+    { value: '24/7',   label: 'lead coverage' },
+  ]
+
+  const activityLog = [
+    { user: 'Sarah M.', action: 'Booked Intro Session', time: '2m ago' },
+    { user: 'John D.',  action: 'Lead captured',        time: '5m ago' },
+    { user: 'Emma S.',  action: 'Booked Intro Session', time: '11m ago' },
+    { user: 'Mike R.',  action: 'Asked about pricing',  time: '14m ago' },
+  ]
+
+  return (
+    <section className="min-h-screen flex flex-col justify-center px-4 sm:px-6 lg:px-8 pt-28 pb-16 relative z-10">
+      <div className="max-w-7xl mx-auto w-full">
+
+        {/* Two-column layout */}
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+
+          {/* ── Left: copy + CTAs ── */}
+          <div>
+            {/* Eyebrow */}
+            <div className="flex items-center gap-2 mb-8">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#00F0FF]" />
+              <span className="text-[12px] font-medium tracking-widest uppercase text-white/40">
+                AI Automation for Gyms
+              </span>
+            </div>
+
+            {/* Headline */}
+            <h1 className="text-5xl sm:text-6xl lg:text-[72px] font-bold tracking-tighter leading-[1.02] mb-6">
+              Automate your<br />
+              <span className="text-[#00F0FF]">Fitness Facility.</span>
+            </h1>
+
+            {/* Subheadline */}
+            <p className="text-[17px] text-white/45 mb-10 leading-relaxed font-normal max-w-md">
+              Deploy AI agents that handle lead capture, session booking,
+              and member support — so you don't have to.
+            </p>
+
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-14">
+              <a href="#pricing" className="btn-primary">
+                Start Free Trial
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+                </svg>
+              </a>
+              <button className="btn-secondary" onClick={() => window.dispatchEvent(new Event('open-ironhaus-chat'))}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                Watch Demo
+              </button>
+            </div>
+
+            {/* Stats row */}
+            <div className="flex flex-wrap gap-x-8 gap-y-4">
+              {stats.map((s, i) => (
+                <div key={i} className="flex items-baseline gap-2">
+                  <span className="text-[22px] font-bold tracking-tight text-white">{s.value}</span>
+                  <span className="text-[13px] text-white/35 font-normal">{s.label}</span>
+                  {i < stats.length - 1 && (
+                    <span className="hidden sm:block ml-6 text-white/10 select-none">|</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Right: dashboard mock ── */}
+          <div className="w-full surface overflow-hidden" style={{ borderRadius: '16px' }}>
+            {/* Window chrome */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.06]">
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
               </div>
-              <div className="h-full rounded-lg bg-white/5 border border-white/5 p-4">
-                <div className="text-sm text-white/40 mb-4">Live Agent Activity</div>
-                <div className="space-y-3">
+              <span className="text-[11px] text-white/25 font-mono tracking-wide">
+                Agent Performance · Live
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00F0FF] opacity-60" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#00F0FF]" />
+                </span>
+                <span className="text-[11px] text-white/25">live</span>
+              </div>
+            </div>
+
+            {/* Dashboard body */}
+            <div className="grid grid-cols-3 gap-0 divide-x divide-white/[0.06]">
+
+              {/* Chart + metrics */}
+              <div className="col-span-2 p-5 space-y-4">
+                {/* Bar chart */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] text-white/30 uppercase tracking-wider">Leads this week</span>
+                    <span className="text-[10px] text-[#00F0FF]">+12%</span>
+                  </div>
+                  <div className="h-20 flex items-end gap-1">
+                    {[38, 52, 41, 68, 55, 82, 70, 100].map((h, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 rounded-sm"
+                        style={{
+                          height: `${h}%`,
+                          background: i === 7
+                            ? 'rgba(0,240,255,0.65)'
+                            : 'rgba(255,255,255,0.07)',
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Metric cards */}
+                <div className="grid grid-cols-2 gap-2.5">
                   {[
-                    { user: 'Sarah M.', action: 'Booked Intro Session' },
-                    { user: 'John D.', action: 'Asked about pricing' },
-                    { user: 'Mike R.', action: 'Cancelled membership' },
-                    { user: 'Emma S.', action: 'Booked Intro Session' }
-                  ].map((log, i) => (
-                    <div key={i} className="flex gap-3 items-start border-b border-white/5 pb-2">
-                      <div className="w-2 h-2 rounded-full bg-cyan-400 mt-1.5 shadow-[0_0_10px_rgba(0,240,255,0.5)]"></div>
-                      <div>
-                        <div className="text-sm text-white/80">{log.user}</div>
-                        <div className="text-xs text-white/40 font-mono">{log.action}</div>
+                    { label: 'Leads Captured', value: '1,204', delta: '+12%' },
+                    { label: 'Sessions Booked', value: '482',  delta: '+8%'  },
+                  ].map((m, i) => (
+                    <div key={i} className="surface p-3.5" style={{ borderRadius: '10px' }}>
+                      <p className="text-[10px] text-white/30 mb-1.5 uppercase tracking-wider">{m.label}</p>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-xl font-bold tracking-tight text-white">{m.value}</span>
+                        <span className="text-[10px] text-[#00F0FF]">{m.delta}</span>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-           </div>
+
+              {/* Activity feed */}
+              <div className="p-5">
+                <p className="text-[10px] text-white/30 uppercase tracking-wider mb-4">Live Activity</p>
+                <div className="space-y-4">
+                  {activityLog.map((log, i) => (
+                    <div key={i} className="flex gap-2.5">
+                      <div className="mt-1 w-1.5 h-1.5 rounded-full bg-[#00F0FF] shrink-0 opacity-60" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12px] text-white/75 font-medium truncate">{log.user}</p>
+                        <p className="text-[10px] text-white/35 font-mono truncate">{log.action}</p>
+                      </div>
+                      <span className="text-[9px] text-white/20 shrink-0">{log.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
         </div>
       </div>
     </section>

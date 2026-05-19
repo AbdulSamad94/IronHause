@@ -11,6 +11,7 @@ import psycopg
 from agents import function_tool
 
 from core.database import get_db_url
+from services.email_service import notify_new_lead
 from .guardrails import validate_lead_data
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ async def capture_lead(
 
         lead_id = result[0] if result else None
         logger.info("Lead captured: id=%s email=%s", lead_id, email)
+        await notify_new_lead(name, email, message, lead_id)
         return f"Lead saved! We'll follow up with {name} at {email} shortly."
 
     except Exception:

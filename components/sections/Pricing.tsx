@@ -16,90 +16,107 @@ export function Pricing() {
       },
       { threshold: 0.1 }
     )
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current)
-    }
-
+    if (sectionRef.current) observer.observe(sectionRef.current)
     return () => observer.disconnect()
   }, [])
+
+  const tiers = [
+    {
+      name: 'Agent Plugin',
+      price: '99',
+      cycle: '/mo',
+      desc: 'For gyms with an existing modern website.',
+      features: ['AI Chatbot Integration', 'Lead Capture Protocol', 'Calendar Sync', 'Basic FAQ Training'],
+      popular: false,
+    },
+    {
+      name: 'Full Platform',
+      price: '1.5k',
+      cycle: ' flat',
+      desc: 'Complete digital overhaul for your facility.',
+      features: ['Premium Website Design', 'Pre-installed AI Agent', 'Custom Domain & SEO', 'Advanced SOP Training'],
+      popular: true,
+    },
+    {
+      name: 'Enterprise',
+      price: 'Custom',
+      cycle: '',
+      desc: 'For multi-location franchise operations.',
+      features: ['Multi-Location Support', 'Custom LLM Fine-tuning', 'CRM & Zapier Webhooks', 'Dedicated Account Manager'],
+      popular: false,
+    },
+  ]
 
   return (
     <section
       ref={sectionRef}
       id="pricing"
-      className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 transition-all duration-1000 ease-out ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+      className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 transition-all duration-700 ease-out ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}
     >
-      <div className="text-center mb-20">
+      {/* Section header */}
+      <div className="mb-16">
+        <div className="flex items-center gap-2 mb-6">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#00F0FF]" />
+          <span className="text-[12px] font-medium tracking-widest uppercase text-white/40">Pricing</span>
+        </div>
         <h2 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-          Simple, transparent <span className="text-linear">pricing.</span>
+          Simple, transparent <span className="text-[#00F0FF]">pricing.</span>
         </h2>
-        <p className="text-white/50 max-w-2xl mx-auto text-lg">
+        <p className="text-white/45 max-w-xl text-[17px] font-normal leading-relaxed">
           Choose the deployment tier that fits your facility's scale.
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8 items-center max-w-5xl mx-auto">
-        {[
-          {
-            name: 'Agent Plugin',
-            price: '99',
-            cycle: '/mo',
-            desc: 'For gyms with an existing modern website.',
-            features: ['AI Chatbot Integration', 'Lead Capture Protocol', 'Calendar Sync', 'Basic FAQ Training'],
-            popular: false,
-          },
-          {
-            name: 'Full Platform',
-            price: '1.5k',
-            cycle: ' flat',
-            desc: 'Complete digital overhaul for your facility.',
-            features: ['Premium Website Design', 'Pre-installed AI Agent', 'Custom Domain & SEO', 'Advanced SOP Training'],
-            popular: true,
-          },
-          {
-            name: 'Enterprise',
-            price: 'Custom',
-            cycle: '',
-            desc: 'For multi-location franchise operations.',
-            features: ['Multi-Location Support', 'Custom LLM Fine-tuning', 'CRM & Zapier Webhooks', 'Dedicated Account Manager'],
-            popular: false,
-          },
-        ].map((tier, i) => (
+      <div className="grid md:grid-cols-3 gap-5 items-start max-w-5xl mx-auto">
+        {tiers.map((tier, i) => (
           <div
             key={i}
-            className={`glass-surface p-8 relative ${tier.popular ? 'border-cyan-500/30 shadow-[0_0_40px_rgba(0,240,255,0.1)] transform md:-translate-y-4' : ''}`}
+            className={`surface p-7 relative flex flex-col ${
+              tier.popular ? 'border-white/20 md:-translate-y-3' : ''
+            }`}
           >
             {tier.popular && (
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-linear-to-r from-cyan-400 to-blue-500 text-black text-[10px] font-bold px-3 py-1 rounded-full tracking-wider uppercase">
-                Most Popular
-              </div>
+              <div className="absolute -top-px left-6 right-6 h-px bg-[#00F0FF]/60" />
             )}
-            
-            <h3 className="text-lg font-semibold mb-2">{tier.name}</h3>
-            <p className="text-white/40 text-xs mb-6 h-8">{tier.desc}</p>
-            
-            <div className="mb-8 border-b border-white/5 pb-8">
-              <span className="text-5xl font-bold tracking-tighter">{tier.price === 'Custom' ? tier.price : `£${tier.price}`}</span>
-              <span className="text-white/40 text-sm ml-1">{tier.cycle}</span>
+            {tier.popular && (
+              <span className="inline-flex self-start mb-5 text-[10px] font-semibold tracking-widest uppercase text-[#00F0FF] border border-[#00F0FF]/30 rounded-full px-3 py-1">
+                Most Popular
+              </span>
+            )}
+
+            <h3 className="text-[16px] font-semibold mb-1.5 tracking-tight">{tier.name}</h3>
+            <p className="text-white/35 text-[12px] mb-7 leading-relaxed">{tier.desc}</p>
+
+            <div className="mb-7 pb-7 border-b border-white/[0.06]">
+              <span className="text-[44px] font-bold tracking-tighter leading-none">
+                {tier.price === 'Custom' ? tier.price : `£${tier.price}`}
+              </span>
+              <span className="text-white/35 text-[13px] ml-1">{tier.cycle}</span>
             </div>
 
-            <ul className="space-y-4 mb-8 min-h-[160px]">
+            <ul className="space-y-3.5 mb-8 flex-1">
               {tier.features.map((feature, j) => (
-                <li key={j} className="flex items-start text-sm text-white/70 font-light">
-                  <svg className="w-5 h-5 text-cyan-400 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                <li key={j} className="flex items-center gap-3 text-[13px] text-white/65 font-light">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00F0FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-70">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                   {feature}
                 </li>
               ))}
             </ul>
 
-            <button className={`w-full py-3 rounded-xl font-medium text-sm transition-all ${
-              tier.popular 
-                ? 'btn-glow' 
-                : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
-            }`}>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('open-ironhaus-chat', {
+                detail: { message: `I'm interested in the ${tier.name} plan. Can you tell me more?` }
+              }))}
+              className={`w-full py-2.5 rounded-lg text-[13px] font-medium transition-all ${
+                tier.popular
+                  ? 'btn-primary justify-center'
+                  : 'bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white border border-white/[0.08]'
+              }`}
+            >
               Get Started
             </button>
           </div>
