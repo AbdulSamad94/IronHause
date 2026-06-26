@@ -7,6 +7,7 @@ export const leads = pgTable('leads', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 255 }),
   email: varchar('email', { length: 255 }),
+  phone: varchar('phone', { length: 50 }),
   message: text('message'),
   source: varchar('source', { length: 100 }).default('ai_agent'),
   createdAt: timestamp('created_at').defaultNow().notNull(),

@@ -51,6 +51,14 @@ export function Hero() {
                   <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
                 </svg>
               </a>
+              <button
+                className="btn-secondary"
+                onClick={() => window.dispatchEvent(new CustomEvent('open-ironhaus-chat', {
+                  detail: { message: "I'd like to book a free trial session." }
+                }))}
+              >
+                Book a Free Trial
+              </button>
               <button className="btn-secondary" onClick={() => window.dispatchEvent(new Event('open-ironhaus-chat'))}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <polygon points="5 3 19 12 5 21 5 3" />

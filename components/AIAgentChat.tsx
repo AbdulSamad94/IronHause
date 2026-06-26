@@ -1,24 +1,31 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { sendChatMessage } from '@/lib/api-client'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
 const MAX_CHARS = 1000
 
+const SUGGESTED_PROMPTS = [
+  'Book a free intro session',
+  'What are your membership prices?',
+  'What classes do you offer?',
+  'Tell me about personal training',
+]
+
 export function AIAgentChat() {
-  const [isOpen, setIsOpen]       = useState(false)
+  const [isOpen, setIsOpen]         = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
-  const [sessionId, setSessionId] = useState<string>('')
-  const [messages, setMessages]   = useState<{ role: 'agent' | 'user'; text: string }[]>([
+  const [sessionId, setSessionId]   = useState<string>('')
+  const [messages, setMessages]     = useState<{ role: 'agent' | 'user'; text: string }[]>([
     { role: 'agent', text: 'Hi there! I am the IronHause AI assistant. I can help answer questions about our pricing, class schedules, or book you an intro session. How can I help?' }
   ])
-  const [input, setInput]         = useState('')
-  const [isTyping, setIsTyping]   = useState(false)
-  const messagesEndRef            = useRef<HTMLDivElement>(null)
-  const textareaRef               = useRef<HTMLTextAreaElement>(null)
-  const sendMessageRef            = useRef<(text: string) => Promise<void>>(async () => {})
+  const [input, setInput]           = useState('')
+  const [isTyping, setIsTyping]     = useState(false)   // wave dots: waiting for first token
+  const [isStreaming, setIsStreaming] = useState(false)  // stream in progress: blocks new sends
+  const messagesEndRef              = useRef<HTMLDivElement>(null)
+  const textareaRef                 = useRef<HTMLTextAreaElement>(null)
+  const sendMessageRef              = useRef<(text: string) => Promise<void>>(async () => {})
 
   useEffect(() => {
     const stored = localStorage.getItem('ironhaus_session_id')
@@ -33,7 +40,7 @@ export function AIAgentChat() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isTyping])
+  }, [messages, isTyping, isStreaming])
 
   // Auto-grow textarea — shrinks back when text is cleared
   const autoResize = useCallback(() => {
@@ -49,21 +56,92 @@ export function AIAgentChat() {
   }, [input, autoResize])
 
   const sendMessage = async (text: string) => {
-    if (!text.trim()) return
+    if (!text.trim() || isStreaming) return
     setMessages(prev => [...prev, { role: 'user', text }])
     setInput('')
     setIsTyping(true)
+    setIsStreaming(true)
 
     try {
-      const data = await sendChatMessage(text, sessionId)
-      if (data.response) {
-        setMessages(prev => [...prev, { role: 'agent', text: data.response! }])
+      const res = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, sessionId }),
+      })
+
+      if (!res.ok) {
+        let errorMsg = "Something went wrong. Please try again in a moment."
+        if (res.status === 429) {
+          errorMsg = "You've sent a lot of messages! Please wait a few minutes before trying again."
+        } else {
+          try {
+            const errData = await res.json() as { error?: string }
+            if (errData.error) errorMsg = errData.error
+          } catch { /* ignore parse errors */ }
+        }
+        throw new Error(errorMsg)
+      }
+      if (!res.body) throw new Error('Connection error. Please refresh and try again.')
+
+      const reader  = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer     = ''
+      let hasContent = false
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+
+        // Split on SSE message boundaries (\n\n) and keep any incomplete tail
+        const parts = buffer.split('\n\n')
+        buffer = parts.pop() ?? ''
+
+        for (const part of parts) {
+          const line = part.trim()
+          if (!line.startsWith('data: ')) continue
+          const raw = line.slice(6).trim()
+          if (raw === '[DONE]') continue
+
+          try {
+            const parsed = JSON.parse(raw) as { token?: string; error?: string }
+
+            if (parsed.error) {
+              setIsTyping(false)
+              setMessages(prev => [...prev, { role: 'agent', text: parsed.error! }])
+              hasContent = true
+            } else if (parsed.token) {
+              if (!hasContent) {
+                // First token — swap wave for real content
+                setIsTyping(false)
+                hasContent = true
+                setMessages(prev => [...prev, { role: 'agent', text: parsed.token! }])
+              } else {
+                // Append subsequent tokens to the last agent message
+                setMessages(prev => {
+                  const updated = [...prev]
+                  const last = updated[updated.length - 1]
+                  if (last?.role === 'agent') {
+                    updated[updated.length - 1] = { ...last, text: last.text + parsed.token }
+                  }
+                  return updated
+                })
+              }
+            }
+          } catch { /* ignore malformed SSE lines */ }
+        }
+      }
+
+      if (!hasContent) {
+        setMessages(prev => [...prev, { role: 'agent', text: "Sorry, I couldn't generate a response." }])
       }
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Sorry, I\'m having trouble connecting right now.'
+      const msg = error instanceof Error ? error.message : "Sorry, I'm having trouble connecting right now."
       setMessages(prev => [...prev, { role: 'agent', text: msg }])
     } finally {
       setIsTyping(false)
+      setIsStreaming(false)
     }
   }
 
@@ -103,8 +181,9 @@ export function AIAgentChat() {
     }
   }
 
-  const charsLeft   = MAX_CHARS - input.length
-  const showCounter = input.length > 800
+  const charsLeft      = MAX_CHARS - input.length
+  const showCounter    = input.length > 800
+  const hasUserMessage = messages.some(m => m.role === 'user')
 
   // Window size classes — normal vs expanded
   const windowW = isExpanded ? 'sm:w-[500px]' : 'sm:w-[400px]'
@@ -220,18 +299,46 @@ export function AIAgentChat() {
 
             {isTyping && (
               <div className="flex flex-col items-start">
-                <div className="bg-white/5 border border-white/5 rounded-2xl rounded-tl-sm px-5 py-4 w-48 space-y-2.5">
-                  <div className="h-2 bg-white/10 rounded-full w-3/4 animate-pulse" />
-                  <div className="h-2 bg-white/10 rounded-full w-full animate-pulse [animation-delay:150ms]" />
-                  <div className="h-2 bg-white/10 rounded-full w-1/2 animate-pulse [animation-delay:300ms]" />
+                <div className="bg-white/5 border border-white/5 rounded-2xl rounded-tl-sm px-5 py-[14px]">
+                  <div className="flex items-center gap-1.5">
+                    {[0, 1, 2].map(i => (
+                      <span
+                        key={i}
+                        className="block w-[7px] h-[7px] rounded-full bg-white/60"
+                        style={{ animation: 'typing-wave 1.2s ease-in-out infinite', animationDelay: `${i * 0.2}s` }}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
+
+            {/* Suggested prompts — inline in the message feed, disappear after first user message */}
+            {!hasUserMessage && !isTyping && (
+              <div className="flex flex-col gap-1.5">
+                {SUGGESTED_PROMPTS.map(prompt => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => sendMessage(prompt)}
+                    disabled={isStreaming}
+                    className="w-full flex items-center justify-between gap-3 text-left text-[12px] text-white/55 bg-white/[0.04] border border-white/[0.07] rounded-xl px-4 py-2.5 hover:bg-white/[0.08] hover:border-[#00F0FF]/25 hover:text-white/80 transition-all disabled:opacity-40 group"
+                  >
+                    <span>{prompt}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-30 group-hover:opacity-60 transition-all">
+                      <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 
           {/* ── Input area ── */}
           <div className="p-4 bg-linear-to-t from-aura-bg to-transparent pt-8 shrink-0">
+
             <form onSubmit={handleSubmit} className="relative flex items-end gap-2">
               <div className="flex-1 relative">
                 <textarea
@@ -260,7 +367,7 @@ export function AIAgentChat() {
               {/* Send button */}
               <button
                 type="submit"
-                disabled={!input.trim() || isTyping}
+                disabled={!input.trim() || isStreaming}
                 aria-label="Send message"
                 className="shrink-0 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:hover:scale-100 mb-0.5"
               >
@@ -283,16 +390,23 @@ export function AIAgentChat() {
         </div>
       )}
 
-      {/* ── Toggle button ── */}
-      <button
-        onClick={() => setIsOpen(prev => !prev)}
-        aria-label={isOpen ? 'Close AI Chat' : 'Open AI Chat'}
-        className={`relative group flex items-center justify-center transition-all duration-300 ${
-          isOpen
-            ? 'w-12 h-12 rounded-full bg-white/10 border border-white/20 hover:bg-white/20'
-            : 'w-16 h-16 rounded-full btn-glow'
-        }`}
-      >
+      {/* ── Toggle button + capability label ── */}
+      <div className="flex items-center gap-3">
+        {!isOpen && (
+          <div className="bg-[#030508]/90 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2.5 shadow-lg shadow-black/30 animate-in fade-in slide-in-from-right-2 duration-400 whitespace-nowrap">
+            <span className="text-[12px] text-white/65 font-medium">Book · Pricing · Support</span>
+          </div>
+        )}
+
+        <button
+          onClick={() => setIsOpen(prev => !prev)}
+          aria-label={isOpen ? 'Close AI Chat' : 'Open AI Chat'}
+          className={`relative group flex items-center justify-center transition-all duration-300 ${
+            isOpen
+              ? 'w-12 h-12 rounded-full bg-white/10 border border-white/20 hover:bg-white/20'
+              : 'w-16 h-16 rounded-full btn-glow'
+          }`}
+        >
         {!isOpen && (
           <div className="absolute inset-0 rounded-full bg-cyan-400/20 animate-ping" style={{ animationDuration: '3s' }} />
         )}
@@ -307,7 +421,8 @@ export function AIAgentChat() {
             </svg>
           )}
         </div>
-      </button>
+        </button>
+      </div>{/* end capability label + toggle row */}
     </div>
   )
 }

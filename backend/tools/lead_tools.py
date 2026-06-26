@@ -17,8 +17,8 @@ from .guardrails import validate_lead_data
 logger = logging.getLogger(__name__)
 
 _INSERT_LEAD = """
-    INSERT INTO leads (name, email, message, source)
-    VALUES (%(name)s, %(email)s, %(message)s, %(source)s)
+    INSERT INTO leads (name, email, phone, message, source)
+    VALUES (%(name)s, %(email)s, %(phone)s, %(message)s, %(source)s)
     RETURNING id
 """
 
@@ -28,6 +28,7 @@ async def capture_lead(
     name: Annotated[str, "The full name of the gym owner or prospect"],
     email: Annotated[str, "The email address of the gym owner or prospect"],
     message: Annotated[str, "A brief summary of what the prospect is looking for"],
+    phone: Annotated[str, "The prospect's phone number — required before calling this tool"],
 ) -> str:
     """
     Saves a new lead to the database when a gym owner expresses interest
@@ -39,14 +40,20 @@ async def capture_lead(
             async with conn.cursor() as cur:
                 await cur.execute(
                     _INSERT_LEAD,
-                    {"name": name, "email": email, "message": message, "source": "ai_agent"},
+                    {
+                        "name": name,
+                        "email": email,
+                        "phone": phone or None,
+                        "message": message,
+                        "source": "ai_agent",
+                    },
                 )
                 result = await cur.fetchone()
                 await conn.commit()
 
         lead_id = result[0] if result else None
         logger.info("Lead captured: id=%s email=%s", lead_id, email)
-        await notify_new_lead(name, email, message, lead_id)
+        await notify_new_lead(name, email, phone, message, lead_id)
         return f"Lead saved! We'll follow up with {name} at {email} shortly."
 
     except Exception:
