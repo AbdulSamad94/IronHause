@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-const RATE_LIMIT_REQUESTS = 15;
+const RATE_LIMIT_REQUESTS = 50;
 const RATE_LIMIT_WINDOW = '1 h';
 
 function initRateLimiter(): Ratelimit | null {

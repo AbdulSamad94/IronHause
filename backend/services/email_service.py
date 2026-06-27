@@ -192,7 +192,8 @@ def _base_email(title: str, preview: str, badge_text: str, badge_color: str,
           </html>"""
 
 
-def _lead_body(name: str, email: str, message: str, lead_id: int) -> str:
+def _lead_body(name: str, email: str, phone: str, message: str, lead_id: int) -> str:
+    phone_row = _row("Phone", phone, alt=False) if phone else ""
     cta_row = f"""
       <!-- CTA -->
       <tr>
@@ -220,7 +221,6 @@ def _lead_body(name: str, email: str, message: str, lead_id: int) -> str:
         <td style="border-left:1px solid {_BORDER};border-right:1px solid {_BORDER};">
           <table width="100%" cellpadding="0" cellspacing="0" border="0"
                  style="border-top:1px solid {_BORDER};">
-            <!-- Lead ID header row -->
             <tr>
               <td colspan="2" style="padding:10px 24px;background-color:{_ROW_ALT};
                                       border-bottom:1px solid {_BORDER};">
@@ -231,6 +231,7 @@ def _lead_body(name: str, email: str, message: str, lead_id: int) -> str:
             </tr>
             {_row("Name", name, alt=False)}
             {_row("Email", f'<a href="mailto:{email}" style="color:#0891B2;text-decoration:none;">{email}</a>', alt=True)}
+            {phone_row}
             {_row("Needs", message, alt=False)}
           </table>
         </td>
@@ -238,15 +239,17 @@ def _lead_body(name: str, email: str, message: str, lead_id: int) -> str:
       {cta_row}"""
 
 
-def _booking_body(booking_id: int, preferred_date: str, notes: str) -> str:
+def _booking_combined_body(name: str, email: str, phone: str,
+                           booking_id: int, preferred_date: str, notes: str) -> str:
+    """Combined body: contact details + booking details in one email."""
     notes_display = notes if notes else "No additional notes"
+    phone_row = _row("Phone", phone, alt=True) if phone else ""
     status_pill = (f'<span style="display:inline-block;padding:2px 10px;border-radius:100px;'
                    f'background-color:#F0FDF4;border:1px solid #BBF7D0;'
                    f'font-size:12px;font-weight:600;color:#15803D;'
                    f'font-family:\'DM Sans\',Arial,sans-serif;">Pending Confirmation</span>')
 
     tip_row = f"""
-      <!-- Tip box -->
       <tr>
         <td style="background-color:{_CARD_BG};padding:0 32px 32px;
                     border-left:1px solid {_BORDER};border-right:1px solid {_BORDER};">
@@ -268,14 +271,26 @@ def _booking_body(booking_id: int, preferred_date: str, notes: str) -> str:
       </tr>"""
 
     return f"""
-      <!-- Details table -->
       <tr>
         <td style="border-left:1px solid {_BORDER};border-right:1px solid {_BORDER};">
           <table width="100%" cellpadding="0" cellspacing="0" border="0"
                  style="border-top:1px solid {_BORDER};">
+            <!-- Contact section header -->
             <tr>
               <td colspan="2" style="padding:10px 24px;background-color:{_ROW_ALT};
                                       border-bottom:1px solid {_BORDER};">
+                <p style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.7px;
+                           color:{_TEXT_MUTED};font-family:'DM Sans',Arial,sans-serif;
+                           text-transform:uppercase;">Contact Details</p>
+              </td>
+            </tr>
+            {_row("Name", name, alt=False)}
+            {_row("Email", f'<a href="mailto:{email}" style="color:#0891B2;text-decoration:none;">{email}</a>', alt=True)}
+            {phone_row}
+            <!-- Booking section header -->
+            <tr>
+              <td colspan="2" style="padding:10px 24px;background-color:{_ROW_ALT};
+                                      border-bottom:1px solid {_BORDER};border-top:1px solid {_BORDER};">
                 <p style="margin:0;font-size:11px;font-weight:600;letter-spacing:0.7px;
                            color:{_TEXT_MUTED};font-family:'DM Sans',Arial,sans-serif;
                            text-transform:uppercase;">Booking #{booking_id}</p>
@@ -287,7 +302,6 @@ def _booking_body(booking_id: int, preferred_date: str, notes: str) -> str:
           </table>
         </td>
       </tr>
-      <!-- Spacer -->
       <tr>
         <td style="height:24px;background-color:{_CARD_BG};
                     border-left:1px solid {_BORDER};border-right:1px solid {_BORDER};">&nbsp;</td>
@@ -295,17 +309,21 @@ def _booking_body(booking_id: int, preferred_date: str, notes: str) -> str:
       {tip_row}"""
 
 
-async def notify_new_lead(name: str, email: str, message: str, lead_id: int) -> None:
+
+async def notify_new_lead(name: str, email: str, phone: str, message: str, lead_id: int) -> None:
+    """Fires when a lead is captured without a booking (pure interest)."""
     if not _is_configured():
         return
 
     safe_name    = html.escape(name)
     safe_email   = html.escape(email)
+    safe_phone   = html.escape(phone) if phone else ""
     safe_message = html.escape(message)
 
     params = {
         "from": "IronHause AI <onboarding@resend.dev>",
         "to": settings.NOTIFICATION_EMAIL,
+        "reply_to": email,
         "subject": f"New Lead: {safe_name}",
         "html": _base_email(
             title=f"New Lead: {safe_name}",
@@ -315,7 +333,7 @@ async def notify_new_lead(name: str, email: str, message: str, lead_id: int) -> 
             headline=f"New lead from {safe_name}",
             subline="Your AI agent captured a new prospect. Their details are below.",
             accent=_CYAN,
-            body_html=_lead_body(safe_name, safe_email, safe_message, lead_id),
+            body_html=_lead_body(safe_name, safe_email, safe_phone, safe_message, lead_id),
         ),
     }
 
@@ -326,26 +344,36 @@ async def notify_new_lead(name: str, email: str, message: str, lead_id: int) -> 
         logger.exception("Failed to send lead notification email for lead_id=%s", lead_id)
 
 
-async def notify_new_booking(booking_id: int, preferred_date: str, notes: str) -> None:
+async def notify_new_booking(
+    name: str, email: str, phone: str,
+    booking_id: int, preferred_date: str, notes: str,
+) -> None:
+    """Fires when a booking is made — single combined email with contact + booking details."""
     if not _is_configured():
         return
 
+    safe_name  = html.escape(name)
+    safe_email = html.escape(email)
+    safe_phone = html.escape(phone) if phone else ""
     safe_date  = html.escape(preferred_date)
     safe_notes = html.escape(notes) if notes else ""
 
     params = {
         "from": "IronHause AI <onboarding@resend.dev>",
         "to": settings.NOTIFICATION_EMAIL,
-        "subject": f"New Booking Request — {safe_date}",
+        "reply_to": email,
+        "subject": f"New Booking from {safe_name} — {safe_date}",
         "html": _base_email(
-            title=f"New Booking: {safe_date}",
-            preview=f"Intro session requested for {safe_date}. Booking #{booking_id}.",
+            title=f"New Booking: {safe_name}",
+            preview=f"{safe_name} booked an intro session for {safe_date}. Booking #{booking_id}.",
             badge_text="Booking Request",
             badge_color=_PURPLE,
-            headline="New intro session requested",
+            headline=f"New booking from {safe_name}",
             subline="A prospect just booked through your AI agent and is waiting for confirmation.",
             accent=_PURPLE,
-            body_html=_booking_body(booking_id, safe_date, safe_notes),
+            body_html=_booking_combined_body(
+                safe_name, safe_email, safe_phone, booking_id, safe_date, safe_notes
+            ),
         ),
     }
 
