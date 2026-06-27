@@ -1,5 +1,8 @@
 from datetime import datetime
 from typing import Optional, AsyncGenerator
+from zoneinfo import ZoneInfo
+
+_LONDON = ZoneInfo("Europe/London")
 
 from agents import Agent, Runner, SQLiteSession
 from openai.types.responses import ResponseTextDeltaEvent
@@ -10,7 +13,7 @@ from prompts import IRON_HAUSE_SYSTEM_PROMPT
 
 
 def _instructions(ctx: object, agent: object) -> str:
-    now = datetime.now()
+    now = datetime.now(_LONDON)
     date_line = (
         f"IMPORTANT: The current date is {now.strftime('%A, %B %d, %Y')} "
         f"and the current time is {now.strftime('%I:%M %p')}. "
@@ -22,7 +25,7 @@ def _instructions(ctx: object, agent: object) -> str:
 
 def _with_date(message: str) -> str:
     """Prepend live date to user message so it appears in the conversation context itself."""
-    now = datetime.now()
+    now = datetime.now(_LONDON)
     return (
         f"[Today is {now.strftime('%A, %B %d, %Y')} — time is {now.strftime('%I:%M %p')}]\n\n"
         f"{message}"

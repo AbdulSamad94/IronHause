@@ -29,9 +29,9 @@ def validate_lead_data(data):
         logger.warning("Failed to parse tool_arguments JSON in guardrail")
         args = {}
 
-    name  = str(args.get("name", "")).strip()
-    email = str(args.get("email", "")).strip()
-    phone = str(args.get("phone", "")).strip()
+    name  = str(args.get("name") or "").strip()
+    email = str(args.get("email") or "").strip()
+    phone = str(args.get("phone") or "").strip()
 
     if len(name) < 2:
         return ToolGuardrailFunctionOutput.reject_content(

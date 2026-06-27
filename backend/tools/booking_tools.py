@@ -55,6 +55,10 @@ async def book_intro_session(
                 row = await cur.fetchone()
                 if row:
                     lead_id = row[0]
+                    await cur.execute(
+                        "UPDATE leads SET phone = %(phone)s WHERE id = %(id)s AND (phone IS NULL OR phone = '' OR phone <> %(phone)s)",
+                        {"phone": phone, "id": lead_id},
+                    )
                 else:
                     await cur.execute(
                         _INSERT_LEAD,

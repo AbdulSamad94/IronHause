@@ -23,6 +23,7 @@ export function AIAgentChat() {
   const [input, setInput]           = useState('')
   const [isTyping, setIsTyping]     = useState(false)   // wave dots: waiting for first token
   const [isStreaming, setIsStreaming] = useState(false)  // stream in progress: blocks new sends
+  const isStreamingRef              = useRef(false)      // sync guard — React state update is async
   const messagesEndRef              = useRef<HTMLDivElement>(null)
   const textareaRef                 = useRef<HTMLTextAreaElement>(null)
   const sendMessageRef              = useRef<(text: string) => Promise<void>>(async () => {})
@@ -56,7 +57,8 @@ export function AIAgentChat() {
   }, [input, autoResize])
 
   const sendMessage = async (text: string) => {
-    if (!text.trim() || isStreaming) return
+    if (!text.trim() || isStreamingRef.current) return
+    isStreamingRef.current = true
     setMessages(prev => [...prev, { role: 'user', text }])
     setInput('')
     setIsTyping(true)
@@ -142,6 +144,7 @@ export function AIAgentChat() {
     } finally {
       setIsTyping(false)
       setIsStreaming(false)
+      isStreamingRef.current = false
     }
   }
 
