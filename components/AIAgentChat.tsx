@@ -29,12 +29,12 @@ export function AIAgentChat() {
   const sendMessageRef              = useRef<(text: string) => Promise<void>>(async () => {})
 
   useEffect(() => {
-    const stored = localStorage.getItem('ironhaus_session_id')
+    const stored = sessionStorage.getItem('ironhaus_session_id')
     if (stored) {
       setSessionId(stored)
     } else {
       const id = crypto.randomUUID()
-      localStorage.setItem('ironhaus_session_id', id)
+      sessionStorage.setItem('ironhaus_session_id', id)
       setSessionId(id)
     }
   }, [])
